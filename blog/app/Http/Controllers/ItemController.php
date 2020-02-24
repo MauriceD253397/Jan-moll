@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Item;
 use Illuminate\Http\Request;
-
+use Auth;
 class ItemController extends Controller
 {
     /**
@@ -14,10 +14,22 @@ class ItemController extends Controller
      */
     public function index()
     {
+        $user = Auth::user();
         $items = Item::all();
-        return view('products/index',[
-            'items' => $items
-        ]);
+        
+        if($user != null){
+            return view('products/index',[
+                'items' => $items,
+                'user' => $user
+            ]);
+        }
+        else{
+            return view('home',[
+                'user' => Auth::user(),
+            ]);
+        }
+
+
     }
 
     /**
@@ -27,7 +39,7 @@ class ItemController extends Controller
      */
     public function create()
     {
-        //
+
     }
 
     /**
@@ -38,7 +50,12 @@ class ItemController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $item = new Item;
+        $item->name = $request->name;
+        $item->description = $request->description;
+        $item->user_id = null;
+        $item->save();
+        return redirect('home');
     }
 
     /**
@@ -49,7 +66,9 @@ class ItemController extends Controller
      */
     public function show(Item $item)
     {
-        //
+        return view('products.show',[
+            'item' => $item
+        ]);
     }
 
     /**
@@ -72,7 +91,18 @@ class ItemController extends Controller
      */
     public function update(Request $request, Item $item)
     {
-        //
+        //dd($item);
+        if($item->isReserved == 0){
+            $item->isReserved = 1;
+            $item->user_id = Auth::user()->id;
+            $item->save();
+        }
+        else{
+            $item->isReserved = 0;
+            $item->user_id = null;
+            $item->save();
+        }
+        return redirect('home');
     }
 
     /**
@@ -83,6 +113,7 @@ class ItemController extends Controller
      */
     public function destroy(Item $item)
     {
-        //
+        $item->delete();
+        return redirect('products/');
     }
 }
